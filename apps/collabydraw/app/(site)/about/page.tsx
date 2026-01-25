@@ -1,8 +1,62 @@
 import React from "react";
+import type { Metadata } from "next";
+import { baseMetadata } from "@/utils/metadata";
+import Script from "next/script";
+
+export const metadata: Metadata = {
+  ...baseMetadata,
+  title: "About Collabydraw",
+  description:
+    "Learn about Collabydraw - a secure, end-to-end encrypted collaborative whiteboard tool. Discover features, privacy, encryption, and how it works.",
+  openGraph: {
+    ...baseMetadata.openGraph,
+    title: "About Collabydraw",
+    description:
+      "Learn about Collabydraw - a secure, end-to-end encrypted collaborative whiteboard tool. Discover features, privacy, encryption, and how it works.",
+    url: "https://collabydraw.xyz/about",
+  },
+  twitter: {
+    ...baseMetadata.twitter,
+    title: "About Collabydraw",
+    description:
+      "Learn about Collabydraw - a secure, end-to-end encrypted collaborative whiteboard tool. Discover features, privacy, encryption, and how it works.",
+  },
+  alternates: {
+    canonical: "https://collabydraw.xyz/about",
+  },
+};
+
+const aboutPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  name: "About Collabydraw",
+  url: "https://collabydraw.xyz/about",
+  description:
+    "Collabydraw is a web-based collaborative whiteboard where multiple users can draw, edit, and brainstorm together in real time.",
+  mainEntity: {
+    "@type": "SoftwareApplication",
+    name: "Collabydraw",
+    applicationCategory: "ProductivityApplication",
+    operatingSystem: "Web Browser",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  },
+};
 
 export default function AboutPage() {
     return (
-        <div className="space-y-xl bg-page-gradient-purple py-40">
+        <>
+            <Script
+                id="about-page-schema"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify(aboutPageSchema),
+                }}
+            />
+            <div className="space-y-xl bg-page-gradient-purple py-40">
             <section className="container max-w-screen-md space-y-sm text-color-primary-text">
                 <h1 className="text-4xl sm:text-4xl lg:text-6xl font-semibold mb-6 text-center font-assistant">
                     About CollabyDraw
@@ -127,5 +181,6 @@ export default function AboutPage() {
                 </div>
             </section>
         </div>
+        </>
     );
 }

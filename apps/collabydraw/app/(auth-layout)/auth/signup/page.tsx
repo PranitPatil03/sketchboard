@@ -1,6 +1,28 @@
 import { SignUpForm } from "@/components/auth/signup-form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sign Up | Collabydraw",
+  description: "Create a new Collabydraw account to start collaborating on secure, end-to-end encrypted whiteboards.",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+  openGraph: {
+    title: "Sign Up | Collabydraw",
+    description: "Create a new Collabydraw account",
+    url: "https://collabydraw.xyz/auth/signup",
+  },
+  alternates: {
+    canonical: "https://collabydraw.xyz/auth/signup",
+  },
+};
 
 export default function SignUpPage() {
     return (

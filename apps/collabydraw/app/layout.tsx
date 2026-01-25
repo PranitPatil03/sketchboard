@@ -4,7 +4,7 @@ import "./globals.css";
 import Provider from "./provider";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { baseMetadata, jsonLdSchema } from "@/utils/metadata";
+import { baseMetadata, jsonLdSchemas } from "@/utils/metadata";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/react"
 
@@ -55,10 +55,23 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Multiple JSON-LD Schemas for better SEO */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLdSchema)
+            __html: JSON.stringify(jsonLdSchemas.webApplication)
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdSchemas.organization)
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdSchemas.website)
           }}
         />
       </head>

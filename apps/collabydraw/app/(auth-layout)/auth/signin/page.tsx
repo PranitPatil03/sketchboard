@@ -3,6 +3,28 @@ import ScreenLoading from "@/components/ScreenLoading";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Suspense } from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sign In | Collabydraw",
+  description: "Sign in to your Collabydraw account to access your collaborative whiteboard rooms.",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+  openGraph: {
+    title: "Sign In | Collabydraw",
+    description: "Sign in to your Collabydraw account",
+    url: "https://collabydraw.xyz/auth/signin",
+  },
+  alternates: {
+    canonical: "https://collabydraw.xyz/auth/signin",
+  },
+};
 
 export default function SignInPage() {
     return (

@@ -7,13 +7,32 @@ export const baseMetadata: Metadata = {
     template: "%s | Collabydraw",
   },
   description:
-    "Collabydraw is a secure, end-to-end encrypted collaborative whiteboard tool that lets you draw and brainstorm together in real time.",
+    "Collabydraw is a secure, end-to-end encrypted collaborative whiteboard tool that lets you draw and brainstorm together in real time. Create beautiful hand-drawn sketches, diagrams, and designs with real-time collaboration.",
   keywords: [
     "collaborative drawing",
     "online whiteboard",
     "real-time canvas",
     "digital whiteboard",
     "end-to-end encrypted whiteboard",
+    "whiteboard app",
+    "collaborative whiteboard",
+    "drawing tool",
+    "sketch tool",
+    "brainstorming tool",
+    "team collaboration",
+    "real-time drawing",
+    "hand-drawn sketches",
+    "secure whiteboard",
+    "privacy-focused drawing",
+    "web whiteboard",
+    "canvas drawing",
+    "rough.js",
+    "perfect-freehand",
+    "E2EE whiteboard",
+    "100xdevs",
+    "100xdevs community",
+    "100xdevs cohort 2 excalidraw project",
+    "harkirat singh cohort 2 excalidraw project",
   ],
   authors: [{ name: "Om Sharma" }],
   creator: "Om Sharma",
@@ -25,14 +44,15 @@ export const baseMetadata: Metadata = {
     url: "https://collabydraw.xyz",
     title: "Collabydraw — Collaborative whiteboarding made easy",
     description:
-      "Collabydraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them.",
+      "Collabydraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them. End-to-end encrypted and privacy-focused.",
     siteName: "Collabydraw",
     images: [
       {
-        url: "/brand/CollabyDraw1.png",
+        url: "https://collabydraw.xyz/brand/CollabyDraw1.png",
         width: 1349,
         height: 767,
         alt: "Collabydraw - Collaborative Drawing Tool UI",
+        secureUrl: "https://collabydraw.xyz/brand/CollabyDraw1.png",
       },
     ],
   },
@@ -41,9 +61,9 @@ export const baseMetadata: Metadata = {
     card: "summary_large_image",
     title: "Collabydraw — Collaborative whiteboarding made easy",
     description:
-      "Collabydraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them.",
+      "Collabydraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them. End-to-end encrypted and privacy-focused.",
     creator: "@1omsharma",
-    images: ["/brand/CollabyDraw1.png"],
+    images: ["https://collabydraw.xyz/brand/CollabyDraw1.png"],
   },
 
   robots: {
@@ -60,7 +80,7 @@ export const baseMetadata: Metadata = {
   },
 
   verification: {
-    google: "your-google-site-verification-code",
+    google: process.env.GOOGLE_SITE_VERIFICATION || "your-google-site-verification-code",
   },
 
   alternates: {
@@ -79,6 +99,8 @@ export const baseMetadata: Metadata = {
     "msapplication-TileColor": "#ffffff",
     "theme-color": "#ffffff",
   },
+  applicationName: "Collabydraw",
+  category: "productivity",
 };
 
 // Optional: page-specific
@@ -98,18 +120,72 @@ export const generateRoomMetadata: Metadata = {
   },
 };
 
-// Structured Data (JSON-LD)
-export const jsonLdSchema = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: "Collabydraw",
-  url: "https://collabydraw.xyz",
-  description: "End-to-end encrypted real-time collaborative drawing tool",
-  applicationCategory: "Productivity",
-  operatingSystem: "All",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
+export const jsonLdSchemas = {
+  // WebApplication Schema
+  webApplication: {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Collabydraw",
+    url: "https://collabydraw.xyz",
+    description: "End-to-end encrypted real-time collaborative drawing tool with hand-drawn look and feel",
+    applicationCategory: "ProductivityApplication",
+    applicationSubCategory: "Drawing Software",
+    operatingSystem: "Web Browser",
+    browserRequirements: "Requires JavaScript. Requires HTML5.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    featureList: [
+      "Real-time collaborative drawing",
+      "End-to-end encryption",
+      "Hand-drawn look and feel",
+      "Shape tools",
+      "Editable text",
+      "Eraser tool",
+      "Rough.js support",
+      "Perfect-freehand support",
+    ],
+    screenshot: "https://collabydraw.xyz/brand/CollabyDraw1.png",
+  },
+
+  // Organization Schema
+  organization: {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Collabydraw",
+    url: "https://collabydraw.xyz",
+    logo: "https://collabydraw.xyz/brand/CollabyDrawLogo.png",
+    description: "A secure, collaborative whiteboard application",
+    founder: {
+      "@type": "Person",
+      name: "Om Sharma",
+    },
+    sameAs: [
+      "https://twitter.com/1omsharma",
+      "https://github.com/coderomm/CollabyDraw",
+    ],
+  },
+
+  // WebSite Schema
+  website: {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Collabydraw",
+    url: "https://collabydraw.xyz",
+    description: "Collaborative whiteboard with end-to-end encryption",
+    publisher: {
+      "@type": "Organization",
+      name: "Collabydraw",
+    },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: "https://collabydraw.xyz/?q={search_term_string}",
+      },
+      "query-input": "required name=search_term_string",
+    },
   },
 };
