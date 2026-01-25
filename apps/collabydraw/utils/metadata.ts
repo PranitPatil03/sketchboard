@@ -48,11 +48,12 @@ export const baseMetadata: Metadata = {
     siteName: "Collabydraw",
     images: [
       {
-        url: "https://collabydraw.xyz/brand/CollabyDraw1.png",
-        width: 1349,
-        height: 767,
+        url: "https://collabydraw.xyz/brand/og-image.png",
+        width: 1200,
+        height: 630,
         alt: "Collabydraw - Collaborative Drawing Tool UI",
-        secureUrl: "https://collabydraw.xyz/brand/CollabyDraw1.png",
+        type: "image/png",
+        secureUrl: "https://collabydraw.xyz/brand/og-image.png",
       },
     ],
   },
@@ -63,7 +64,7 @@ export const baseMetadata: Metadata = {
     description:
       "Collabydraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them. End-to-end encrypted and privacy-focused.",
     creator: "@1omsharma",
-    images: ["https://collabydraw.xyz/brand/CollabyDraw1.png"],
+    images: ["https://collabydraw.xyz/brand/og-image.png"],
   },
 
   robots: {
@@ -147,7 +148,7 @@ export const jsonLdSchemas = {
       "Rough.js support",
       "Perfect-freehand support",
     ],
-    screenshot: "https://collabydraw.xyz/brand/CollabyDraw1.png",
+    screenshot: "https://collabydraw.xyz/brand/og-image.png",
   },
 
   // Organization Schema
