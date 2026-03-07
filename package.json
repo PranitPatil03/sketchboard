@@ -1,5 +1,5 @@
 {
-  "name": "collabydraw",
+  "name": "sketchboard",
   "private": true,
   "scripts": {
     "build": "turbo build",
@@ -7,7 +7,7 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "db:generate": "cd packages/db && prisma generate && cd ../..",
-    "start:collabydraw": "cd apps/collabydraw && pnpm run start",
+    "start:sketchboard": "cd apps/collabydraw && pnpm run start",
     "start:ws": "cd apps/ws && pnpm run start"
   },
   "devDependencies": {

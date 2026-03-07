@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueVox Background</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body, html { width: 100%; height: 100%; }
+
+  .hero-bg {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 60%, rgba(255,255,255,0.95) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 60% at 0% 10%, #ffffff 0%, transparent 50%),
+      radial-gradient(ellipse 80% 80% at 100% 0%, #e8f0ff 0%, transparent 55%),
+      linear-gradient(180deg, #f0f4ff 0%, #c8d8ff 35%, #5b8ef5 65%, #4a7ee8 100%);
+  }
+
+  /* 8 overlapping layers at different sizes/offsets = truly random feel */
+  .hero-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle, rgba(255,255,255,0.45) 0.6px, transparent 0.6px),
+      radial-gradient(circle, rgba(255,255,255,0.30) 0.5px, transparent 0.5px),
+      radial-gradient(circle, rgba(255,255,255,0.50) 0.7px, transparent 0.7px),
+      radial-gradient(circle, rgba(255,255,255,0.25) 0.5px, transparent 0.5px),
+      radial-gradient(circle, rgba(255,255,255,0.40) 0.6px, transparent 0.6px),
+      radial-gradient(circle, rgba(255,255,255,0.20) 0.4px, transparent 0.4px),
+      radial-gradient(circle, rgba(255,255,255,0.35) 0.6px, transparent 0.6px),
+      radial-gradient(circle, rgba(255,255,255,0.28) 0.5px, transparent 0.5px);
+    background-size:
+      11px 13px,
+      17px 7px,
+      7px 19px,
+      13px 11px,
+      19px 17px,
+      9px 23px,
+      23px 9px,
+      15px 21px;
+    background-position:
+      0px 0px,
+      3px 5px,
+      7px 2px,
+      11px 9px,
+      2px 14px,
+      15px 4px,
+      5px 18px,
+      9px 11px;
+    pointer-events: none;
+    opacity: 0.65;
+  }
+</style>
+</head>
+<body>
+  <div class="hero-bg"></div>
+</body>
+</html>

@@ -257,43 +257,57 @@ wss.on("connection", function connection(ws, req) {
           break;
 
         case WsDataType.CLOSE_ROOM: {
-          const connectionsInRoom = connections.filter((conn) =>
-            conn.rooms.includes(parsedData.roomId)
+          const room = await client.room.findUnique({
+            where: { id: parsedData.roomId },
+          });
+
+          if (!room || room.adminId !== connection.userId) {
+            console.warn(
+              `User ${connection.userId} tried to close room ${parsedData.roomId} but is not admin`
+            );
+            break;
+          }
+
+          // Broadcast CLOSE_ROOM to all participants (except admin)
+          broadcastToRoom(
+            parsedData.roomId,
+            {
+              type: WsDataType.CLOSE_ROOM,
+              roomId: parsedData.roomId,
+              userId: connection.userId,
+              userName: connection.userName,
+              connectionId: connection.connectionId,
+              id: null,
+              message: null,
+              participants: null,
+              timestamp: new Date().toISOString(),
+            },
+            [connection.connectionId],
+            false
           );
 
-          if (
-            connectionsInRoom.length === 1 &&
-            connectionsInRoom[0] &&
-            connectionsInRoom[0].connectionId === connectionId
-          ) {
-            try {
-              await client.room.delete({
-                where: { id: parsedData.roomId },
-              });
+          // Remove all connections from this room
+          connections.forEach((conn) => {
+            conn.rooms = conn.rooms.filter((r) => r !== parsedData.roomId);
+          });
 
-              delete roomShapes[parsedData.roomId];
+          // Clean up room data
+          delete roomShapes[parsedData.roomId];
 
-              connectionsInRoom.forEach((conn) => {
-                if (conn.ws.readyState === WebSocket.OPEN) {
-                  conn.ws.send(
-                    JSON.stringify({
-                      type: "ROOM_CLOSED",
-                      roomId: parsedData.roomId,
-                      timestamp: new Date().toISOString(),
-                    })
-                  );
-                }
-
-                conn.rooms = conn.rooms.filter((r) => r !== parsedData.roomId);
-              });
-
-              console.log(
-                `Room ${parsedData.roomId} closed by connection ${connectionId}`
-              );
-            } catch (err) {
-              console.error("Error deleting room:", err);
-            }
+          try {
+            await client.shape.deleteMany({
+              where: { roomId: parsedData.roomId },
+            });
+            await client.room.delete({
+              where: { id: parsedData.roomId },
+            });
+            console.log(
+              `Room ${parsedData.roomId} closed by admin ${connection.userId}`
+            );
+          } catch (err) {
+            console.error("Error deleting room:", err);
           }
+          break;
         }
 
         case WsDataType.CURSOR_MOVE:
