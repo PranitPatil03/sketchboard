@@ -1,140 +1,122 @@
-# 🎨 Collabydraw | Hand-drawn look & feel • Collaborative • Secure
+# Sketchboard
 
----
+A real-time collaborative whiteboard with a hand-drawn aesthetic, end-to-end encryption, and live cursors.
 
-**CollabyDraw** is a web-based collaborative whiteboard where multiple users can draw, edit, and brainstorm together in real time. Whether solo or in a group session, the app offers a smooth, intuitive canvas experience with real-time sync, shape tools, editable text, and privacy-focused end-to-end encryption — all without needing an account.
+Sketchboard lets multiple users draw, sketch, and brainstorm together on a shared canvas. It uses RoughJS for a hand-drawn look, supports freehand drawing with perfect-freehand, and encrypts all drawing data client-side so the server never sees what you draw. Works standalone for local sketching or in collaborative rooms with real-time sync.
 
----
+## Features
 
-### ✅ Core Features
+- Freehand drawing, shapes (rectangles, diamonds, arrows), and editable text on an HTML Canvas
+- Hand-drawn sketch style powered by RoughJS and natural pen strokes via perfect-freehand
+- Real-time collaboration with WebSocket-powered live sync and cursor tracking
+- End-to-end encryption — the encryption key lives in the URL fragment and never reaches the server
+- Room system with admin controls, auto-cleanup on empty rooms, and shareable invite links
+- Authentication via email/password, Google, and GitHub OAuth using better-auth
+- Eraser tool, selection/multi-select, fill styles, stroke styles, and font families
+- Message queue with auto-retry for reliable delivery on reconnect
+- Multi-tab awareness to prevent duplicate join/leave events
+- Standalone offline mode and collaborative room mode
+- Dark/light theme support
 
-- **Canvas Drawing**: Freehand, shapes, and editable text
-- **Rough.js Support**: Optional sketch-style drawing
-- **Perfect-freehand Support**: Hand drawn feel
-- **Eraser Tool**: Remove individual shapes
-- **Editable Text**: Double-click to edit on canvas
+## Architecture
 
----
+```
++---------------+         WebSocket (JWT auth)         +----------------+
+|   Next.js     | <----------------------------------> |   WS Server    |
+|   Frontend    |    encrypted shape data + cursors     |   (Node.js)    |
+|   (React)     |                                       |                |
++-------+-------+                                       +--------+-------+
+        |                                                        |
+        |  better-auth (sessions, OAuth)                         |  Prisma ORM
+        |                                                        |
+        +-------------------+           +------------------------+
+                            v           v
+                         +-----------------+
+                         |   PostgreSQL    |
+                         |  (Users, Rooms, |
+                         |   Shapes, Auth) |
+                         +-----------------+
+```
 
-### 🔗 Collaboration
+1. Users authenticate on the Next.js frontend via better-auth (email/password or OAuth)
+2. A JWT token is generated for WebSocket authentication
+3. Users create or join rooms — the WS server validates room existence against PostgreSQL
+4. Drawing data is encrypted on the client using a key from the URL fragment (never sent to the server), then broadcast to room participants over WebSocket
+5. The WS server keeps shapes in memory for fast sync and persists them to PostgreSQL
+6. The canvas engine renders everything with RoughJS for the hand-drawn look
+7. Live cursors are broadcast via CURSOR_MOVE messages with per-user colors
 
-- **Real-time Sync**: WebSocket-powered live drawing
-- **Multi-Tab Awareness**: No duplicate join/leave events
-- **Optimistic Updates**: Instant feedback before server response
+## Tech Stack
 
----
+| Layer | Technology |
+|---|---|
+| Monorepo | Turborepo + pnpm workspaces |
+| Frontend | Next.js 15, React 18, TypeScript, Tailwind CSS |
+| UI | Radix UI, shadcn/ui, Lucide icons, Framer Motion |
+| Canvas | HTML Canvas API, RoughJS, perfect-freehand |
+| WebSocket | Node.js + ws library |
+| Auth | better-auth (email/password + Google + GitHub OAuth) |
+| Database | PostgreSQL + Prisma ORM |
+| Validation | Zod (shared schemas) |
+| Containerization | Docker + Docker Compose |
 
-### 🔐 **Privacy & End-to-End Encryption (E2EE)** in CollabyDraw
+## Getting Started
 
-CollabyDraw is built with **privacy by design** to ensure that no sensitive drawing data can be accessed by anyone other than the intended participants.
+### Prerequisites
 
-### 🔑 **How It Works**
+- Node.js >= 18
+- pnpm 9+
+- PostgreSQL
 
-- When a user creates or joins a room, the app generates a link like:
-    
-    ```
-    https://collabydraw.xyz#room=abc123,xyz456
-    ```
-    
-    - `abc123`: Unique room ID (used by the server)
-    - `xyz456`: Encryption key (used **only** on the client)
+### Setup
 
-### 🧠 **Key Never Touches the Server**
+```bash
+git clone https://github.com/your-username/sketchboard.git
+cd sketchboard
 
-- The **encryption key** after the comma (`xyz456`) is part of the URL fragment (`#...`).
-- This fragment is **never sent** in HTTP requests, meaning:
-    
-    > The server cannot see or store the encryption key.
-    > 
+# Install dependencies
+pnpm install
 
-### 🔒 **Client-Side Only Decryption**
+# Set up environment variables
+cp apps/web/.env.example apps/web/.env
+# Edit .env with your database URL, auth secrets, and OAuth credentials
 
-- All encrypted drawing data is transmitted over WebSocket.
-- The **decryption and rendering** happen completely on the client-side using the `key` from the URL.
-- Even if someone intercepts the WebSocket traffic, they cannot decrypt the data without the key.
+# Generate Prisma client and run migrations
+pnpm db:generate
+cd packages/db && npx prisma migrate dev && cd ../..
 
-### 🛡️ **Benefits**
+# Start development servers
+pnpm dev
+```
 
-- No one — not even the server — can read what’s drawn in a room without the key.
-- Ensures **confidentiality** for private brainstorming, teaching, or design sessions.
-- Works like **Collabydraw's E2EE rooms**, but tailored for your collaborative drawing logic.
+The frontend runs on `http://localhost:3000` and the WebSocket server on `ws://localhost:8080`.
 
----
+### Docker
 
-### 🧠 Reliability
+```bash
+docker-compose up
+```
 
-- **Message Queue**: Stores unsent messages in memory/localStorage
-- **Auto Retry**: Flushes queued messages on reconnect
+## Project Structure
 
----
-
-### 🧭 Modes
-
-- **Standalone Mode**: Offline/local drawing
-- **Room Mode**: Collaborative sessions
-
----
-
-### ⚙️ Tech Stack
-
-- **Frontend**: React (Vite), TypeScript, Tailwind CSS
-- **Canvas**: HTML Canvas API + Custom Engine
-- **Realtime**: Native WebSocket (`useWebSocket` hook)
-- **Security**: Hash-based E2EE
-
----
-
-### 📄 Notion Document
-
-https://plum-chamomile-116.notion.site/Collabydraw-Hand-drawn-look-feel-Collaborative-Secure-1cb6d6552d9b802597c1cb575db2a9da?pvs=4
-
----
-
-### 📽️ Youtube Video
-
-https://www.youtube.com/watch?v=NNVdRCoFnK0
-
----
-
-### 🌍 Open Source & Contributions
-
-I want **CollabyDraw** to be open source so that other students and developers can explore and learn from it.  
-If you'd like to contribute—whether it's improving the UI, optimizing performance, or adding new features—feel free to open an issue or submit a pull request!
-
----
-
-### 🧠 How to Contribute
-
-1. **Fork the Repo** and clone it locally
-2. Run `pnpm install` and `pnpm dev` to start the dev server
-3. Check the `Issues` tab for open tasks — especially those labeled `good first issue`
-4. Follow the `CONTRIBUTING.md` (coming soon) for guidelines
-5. Submit a Pull Request — even small improvements matter!
-
-💡 **Ideas for Contribution** (feel free to raise these as issues):
-- Add undo/redo support in standalone mode
-- Add support for duplicating a selected shape using **Ctrl + D** keyboard shortcut.
-- Fix: **Rounded corners not working for Diamond shape**
-  When the **"rounded"** option is selected for diamond shapes, the corners remain sharp. Update the rendering logic to support rounded edges for diamonds.
-
-👉 Tag your issue with `good first issue`, `help wanted`, or `enhancement` so others can discover and contribute!
-
----
-
-### 📄 Architecture Overview (Differences from Cohort Project)
-
-- **Next.js 15 for Fullstack**: Frontend and backend are handled together using server actions. No separate HTTP services.
-- **No Mandatory Auth for Canvas Use**: Users can draw without logging in. Auth is only required for collaboration.
-- **Server Actions Instead of REST APIs**: Room creation, joining, and user management are handled through server actions.
-- **Standalone Mode with Local Storage**: For solo drawing sessions, data is stored locally and never sent to a server.
-- **Interactive Room Collaboration Mode**: Shows participant presence, names, and avatars in real-time sync only as of now.
-- **End-to-End Encrypted Collaboration**: No drawn shapes or messages are stored in any database.
-- **Database Used Only for Auth**: All other state management is client-side or ephemeral.
-- **Hookified WebSocket Layer**: Abstracts the socket connection with clean React patterns.
-
----
-
-## 📄 License
-
-This project is licensed under a **Custom Personal Use License** — you may view and learn from the code, but **commercial use, redistribution, or claiming authorship is strictly prohibited**.  
-See the full [LICENSE](./LICENSE) for details.
+```
+apps/
+  web/                        # Next.js frontend
+    app/                      # App router pages and API routes
+    canvas-engine/            # Custom canvas rendering engine
+    components/               # React components (UI, canvas, auth)
+    actions/                  # Server actions (auth, room)
+    lib/                      # Auth client, utilities
+    hooks/                    # Custom React hooks
+  ws/                         # WebSocket server
+    src/                      # Server entry point
+packages/
+  common/                     # Shared Zod schemas and TypeScript types
+  db/                         # Prisma schema and database client
+  ui/                         # Shared UI component library
+  eslint-config/              # Shared ESLint configs
+  typescript-config/          # Shared TypeScript configs
+docker/                       # Dockerfiles for frontend and WS server
+docker-compose.yml
+turbo.json
+```

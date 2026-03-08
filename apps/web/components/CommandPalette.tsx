@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from "react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -24,7 +23,6 @@ import {
   Download,
   Upload,
   Sun,
-  Moon,
 } from "lucide-react";
 
 interface CommandPaletteProps {

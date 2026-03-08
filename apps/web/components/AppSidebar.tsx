@@ -162,7 +162,7 @@ export function AppSidebar({ isOpen, onClose, canvasColor, setCanvasColor, isMob
                                             </div>
                                         </div>
                                     )}
-                                    <RoomSharingDialog open={isShareOpen} onOpenChange={setIsShareOpen} link={`${BASE_URL}/${decodedPathname}`} />
+                                    <RoomSharingDialog open={isShareOpen} onOpenChange={setIsShareOpen} link={`${BASE_URL}/${decodedPathname}`} isRoomAdmin={false} />
                                     <SidebarItem icon={Share2} label="Share collaboration" onClick={() => setIsShareOpen(true)} />
                                     <SidebarItem icon={Trash} label="Reset the canvas" onClick={() => setClearDialogOpen(true)} />
                                 </>

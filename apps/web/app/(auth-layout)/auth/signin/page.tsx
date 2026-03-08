@@ -3,7 +3,6 @@ import ScreenLoading from "@/components/ScreenLoading";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Suspense } from "react";
-import type { Metadata } from "next";
 
 export default function SignInPage() {
     return (

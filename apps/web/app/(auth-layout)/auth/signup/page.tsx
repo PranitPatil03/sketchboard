@@ -1,7 +1,6 @@
 import { SignUpForm } from "@/components/auth/signup-form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import type { Metadata } from "next";
 
 export default function SignUpPage() {
     return (
