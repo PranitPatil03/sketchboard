@@ -16,7 +16,7 @@ import { getRoomSharingUrl, isInRoom } from "@/utils/roomParams";
 import { BASE_URL } from "@/config/constants";
 import { getClientColor } from "@/utils/getClientColor";
 
-export default function CollaborationToolbar({ participants, hash, isRoomAdmin, onStopSession }: { participants?: RoomParticipants[], hash?: string, isRoomAdmin?: boolean, onStopSession?: () => void }) {
+export default function CollaborationToolbar({ participants, hash, isRoomAdmin, onStopSession, onLeaveRoom }: { participants?: RoomParticipants[], hash?: string, isRoomAdmin?: boolean, onStopSession?: () => void, onLeaveRoom?: () => void }) {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const { data: session } = useSession();
@@ -106,7 +106,7 @@ export default function CollaborationToolbar({ participants, hash, isRoomAdmin, 
 
             {session?.user && session?.user.id ? (
                 inRoom ? (
-                    <RoomSharingDialog open={isOpen} onOpenChange={setIsOpen} link={getSharingUrl()} isRoomAdmin={!!isRoomAdmin} onStopSession={onStopSession} />
+                    <RoomSharingDialog open={isOpen} onOpenChange={setIsOpen} link={getSharingUrl()} isRoomAdmin={!!isRoomAdmin} onStopSession={onStopSession} onLeaveRoom={onLeaveRoom} />
                 ) : (
                     <CreateRoomDialog open={isOpen} onOpenChange={setIsOpen} />
                 )

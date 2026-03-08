@@ -109,6 +109,7 @@ export class CanvasEngine {
 
   private roughSeed: number = 1;
 
+  private destroyed = false;
   private connectionId: string | null = null;
   private myConnections: WebSocketConnection[] = [];
 
@@ -434,7 +435,9 @@ export class CanvasEngine {
       this.isConnected = false;
       this.onConnectionChange?.(false);
       console.warn("WebSocket closed:", e);
-      setTimeout(() => this.connectWebSocket(), 2000);
+      if (!this.destroyed) {
+        setTimeout(() => this.connectWebSocket(), 2000);
+      }
     };
 
     this.socket.onerror = (err) => {
@@ -2594,7 +2597,28 @@ export class CanvasEngine {
     }
   }
 
+  leaveRoom() {
+    this.destroyed = true;
+
+    if (this.socket?.readyState === WebSocket.OPEN && this.roomId) {
+      this.socket.send(
+        JSON.stringify({
+          type: WsDataType.LEAVE,
+          roomId: this.roomId,
+          userId: this.userId,
+        })
+      );
+    }
+
+    this.socket?.close();
+    this.socket = null;
+
+    if (this.flushInterval) clearInterval(this.flushInterval);
+  }
+
   destroy() {
+    this.destroyed = true;
+
     this.canvas.removeEventListener("mousedown", this.mouseDownHandler);
     this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
     this.canvas.removeEventListener("mouseup", this.mouseUpHandler);
@@ -2602,6 +2626,7 @@ export class CanvasEngine {
     this.canvas.removeEventListener("touchstart", this.touchStartHandler);
     this.canvas.removeEventListener("touchmove", this.touchMoveHandler);
     this.canvas.removeEventListener("touchend", this.touchEndHandler);
+    window.removeEventListener("keydown", this.handleKeyDown);
 
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(

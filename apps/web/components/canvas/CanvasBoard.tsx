@@ -201,22 +201,48 @@ export default function CanvasBoard() {
     }, []);
 
     const handleRoomClosed = useCallback(() => {
-        toast({ title: "The room has been closed by the host.", variant: "destructive" });
+        if (canvasEngineState.engine) {
+            canvasEngineState.engine.destroy();
+            setCanvasEngineState(prev => ({ ...prev, engine: null }));
+            initializedWithMode.current = null;
+        }
         setParticipants([]);
         setIsRoomAdmin(false);
+        setMode("standalone");
         window.history.replaceState(null, "", window.location.pathname);
-        window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }, []);
+        toast({ title: "The room has been closed by the host.", variant: "destructive" });
+        router.push("/");
+    }, [canvasEngineState.engine, router]);
 
     const handleStopSession = useCallback(() => {
         if (canvasEngineState.engine) {
             canvasEngineState.engine.closeRoom();
+            canvasEngineState.engine.destroy();
+            setCanvasEngineState(prev => ({ ...prev, engine: null }));
+            initializedWithMode.current = null;
         }
         setParticipants([]);
         setIsRoomAdmin(false);
+        setMode("standalone");
         window.history.replaceState(null, "", window.location.pathname);
-        window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }, [canvasEngineState.engine]);
+        toast({ title: "Session stopped. All participants have been disconnected." });
+        router.push("/");
+    }, [canvasEngineState.engine, router]);
+
+    const handleLeaveRoom = useCallback(() => {
+        if (canvasEngineState.engine) {
+            canvasEngineState.engine.leaveRoom();
+            canvasEngineState.engine.destroy();
+            setCanvasEngineState(prev => ({ ...prev, engine: null }));
+            initializedWithMode.current = null;
+        }
+        setParticipants([]);
+        setIsRoomAdmin(false);
+        setMode("standalone");
+        window.history.replaceState(null, "", window.location.pathname);
+        toast({ title: "You have left the room." });
+        router.push("/");
+    }, [canvasEngineState.engine, router]);
 
     const initializeCanvasEngine = useCallback(() => {
         if (!canvasRef.current) return null;
@@ -409,7 +435,7 @@ export default function CanvasBoard() {
                 />
 
                 {matches && (
-                    <CollaborationToolbar participants={participants} hash={currentHashRef.current} isRoomAdmin={isRoomAdmin} onStopSession={handleStopSession} />
+                    <CollaborationToolbar participants={participants} hash={currentHashRef.current} isRoomAdmin={isRoomAdmin} onStopSession={handleStopSession} onLeaveRoom={handleLeaveRoom} />
                 )}
             </div>
 

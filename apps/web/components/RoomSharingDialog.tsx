@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 
-export function RoomSharingDialog({ open, onOpenChange, link, isRoomAdmin, onStopSession }: { open: boolean, onOpenChange: (open: boolean) => void, link: string, isRoomAdmin: boolean, onStopSession?: () => void }) {
+export function RoomSharingDialog({ open, onOpenChange, link, isRoomAdmin, onStopSession, onLeaveRoom }: { open: boolean, onOpenChange: (open: boolean) => void, link: string, isRoomAdmin: boolean, onStopSession?: () => void, onLeaveRoom?: () => void }) {
     const roomLink = link;
     const [showStopConfirm, setShowStopConfirm] = useState(false);
 
@@ -30,9 +30,8 @@ export function RoomSharingDialog({ open, onOpenChange, link, isRoomAdmin, onSto
         onOpenChange(false);
         if (isRoomAdmin && onStopSession) {
             onStopSession();
-        } else {
-            window.history.replaceState(null, "", window.location.pathname);
-            window.dispatchEvent(new HashChangeEvent("hashchange"));
+        } else if (onLeaveRoom) {
+            onLeaveRoom();
         }
     };
 
