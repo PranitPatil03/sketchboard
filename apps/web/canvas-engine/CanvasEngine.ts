@@ -131,6 +131,10 @@ export class CanvasEngine {
   private currentTheme: "light" | "dark" | null = null;
   private onLiveUpdateFromSelection?: (shape: Shape) => void;
 
+  private isMarqueeSelecting: boolean = false;
+  private marqueeStart: { x: number; y: number } = { x: 0, y: 0 };
+  private marqueeEnd: { x: number; y: number } = { x: 0, y: 0 };
+
   private activeTextarea: HTMLTextAreaElement | null = null;
   private activeTextPosition: { x: number; y: number } | null = null;
 
@@ -921,6 +925,21 @@ export class CanvasEngine {
     });
 
     if (this.activeTool === "selection") {
+      if (this.isMarqueeSelecting) {
+        const mx = Math.min(this.marqueeStart.x, this.marqueeEnd.x);
+        const my = Math.min(this.marqueeStart.y, this.marqueeEnd.y);
+        const mw = Math.abs(this.marqueeEnd.x - this.marqueeStart.x);
+        const mh = Math.abs(this.marqueeEnd.y - this.marqueeStart.y);
+        this.ctx.save();
+        this.ctx.strokeStyle = "#6965db";
+        this.ctx.lineWidth = 1;
+        this.ctx.setLineDash([4, 4]);
+        this.ctx.fillStyle = "rgba(105, 101, 219, 0.08)";
+        this.ctx.fillRect(mx, my, mw, mh);
+        this.ctx.strokeRect(mx, my, mw, mh);
+        this.ctx.setLineDash([]);
+        this.ctx.restore();
+      }
       if (this.SelectionController.hasMultiSelection()) {
         this.SelectionController.drawMultiSelectionBox();
       } else if (this.SelectionController.isShapeSelected()) {
@@ -1047,7 +1066,7 @@ export class CanvasEngine {
     const { x, y } = this.transformPanScale(e.clientX, e.clientY);
     if (this.activeTool === "selection") {
       const selectedShape = this.SelectionController.getSelectedShape();
-      if (selectedShape) {
+      if (selectedShape && !this.SelectionController.hasMultiSelection()) {
         const bounds = this.SelectionController.getShapeBounds(selectedShape);
         const handle = this.SelectionController.getResizeHandleAtPoint(
           x,
@@ -1061,14 +1080,64 @@ export class CanvasEngine {
         }
       }
 
+      // Check if clicking on a shape that's part of a multi-selection
+      if (this.SelectionController.hasMultiSelection()) {
+        // Click anywhere inside the group bounding box to start multi-drag
+        if (this.SelectionController.isPointInMultiSelection(x, y)) {
+          this.SelectionController.startMultiDragging(x, y);
+          return;
+        }
+
+        // Check if clicking on a shape outside the group box
+        for (let i = this.existingShapes.length - 1; i >= 0; i--) {
+          const shape = this.existingShapes[i];
+          if (this.SelectionController.isPointInShape(x, y, shape)) {
+            if (e.shiftKey) {
+              this.SelectionController.toggleInSelection(shape);
+              this.clearCanvas();
+              return;
+            } else {
+              // Click on a non-selected shape without shift: replace selection
+              this.selectedShape = shape;
+              this.SelectionController.setSelectedShape(shape);
+              this.SelectionController.clearMultiSelection();
+              this.SelectionController.startDragging(x, y);
+              this.clearCanvas();
+              return;
+            }
+          }
+        }
+        // Clicked on empty space: clear multi-selection, start marquee
+        this.selectedShape = null;
+        this.SelectionController.setSelectedShape(null);
+        this.SelectionController.clearMultiSelection();
+        this.isMarqueeSelecting = true;
+        this.marqueeStart = { x, y };
+        this.marqueeEnd = { x, y };
+        this.clearCanvas();
+        return;
+      }
+
       for (let i = this.existingShapes.length - 1; i >= 0; i--) {
         const shape = this.existingShapes[i];
 
         if (this.SelectionController.isPointInShape(x, y, shape)) {
-          this.selectedShape = shape;
-          this.SelectionController.setSelectedShape(shape);
-          this.SelectionController.clearMultiSelection();
-          this.SelectionController.startDragging(x, y);
+          if (e.shiftKey) {
+            this.SelectionController.toggleInSelection(shape);
+            const selectedShapes = this.SelectionController.getSelectedShapes();
+            if (selectedShapes.length > 0) {
+              this.selectedShape = selectedShapes[selectedShapes.length - 1]!;
+              this.SelectionController.setSelectedShape(this.selectedShape);
+            } else {
+              this.selectedShape = null;
+              this.SelectionController.setSelectedShape(null);
+            }
+          } else {
+            this.selectedShape = shape;
+            this.SelectionController.setSelectedShape(shape);
+            this.SelectionController.clearMultiSelection();
+            this.SelectionController.startDragging(x, y);
+          }
           this.clearCanvas();
           return;
         }
@@ -1076,6 +1145,9 @@ export class CanvasEngine {
       this.selectedShape = null;
       this.SelectionController.setSelectedShape(null);
       this.SelectionController.clearMultiSelection();
+      this.isMarqueeSelecting = true;
+      this.marqueeStart = { x, y };
+      this.marqueeEnd = { x, y };
       this.clearCanvas();
       return;
     }
@@ -1115,6 +1187,78 @@ export class CanvasEngine {
       this.activeTool !== "arrow"
     ) {
       if (this.activeTool === "selection") {
+        if (this.isMarqueeSelecting) {
+          this.isMarqueeSelecting = false;
+          const { x: mx, y: my } = this.transformPanScale(e.clientX, e.clientY);
+          this.marqueeEnd = { x: mx, y: my };
+          const minX = Math.min(this.marqueeStart.x, this.marqueeEnd.x);
+          const minY = Math.min(this.marqueeStart.y, this.marqueeEnd.y);
+          const maxX = Math.max(this.marqueeStart.x, this.marqueeEnd.x);
+          const maxY = Math.max(this.marqueeStart.y, this.marqueeEnd.y);
+          if (Math.abs(maxX - minX) > 2 || Math.abs(maxY - minY) > 2) {
+            this.SelectionController.clearMultiSelection();
+            for (const shape of this.existingShapes) {
+              const bounds = this.SelectionController.getShapeBounds(shape);
+              // Select if bounding boxes intersect (any overlap)
+              if (
+                bounds.x < maxX &&
+                bounds.x + bounds.width > minX &&
+                bounds.y < maxY &&
+                bounds.y + bounds.height > minY
+              ) {
+                this.SelectionController.toggleInSelection(shape);
+              }
+            }
+            const selected = this.SelectionController.getSelectedShapes();
+            if (selected.length > 0) {
+              this.selectedShape = selected[0]!;
+              this.SelectionController.setSelectedShape(this.selectedShape);
+            }
+          }
+          this.clearCanvas();
+          return;
+        }
+        if (this.SelectionController.isMultiDragging()) {
+          this.SelectionController.stopMultiDragging();
+          // Persist all moved shapes
+          if (this.isStandalone) {
+            try {
+              localStorage.setItem(
+                LOCALSTORAGE_CANVAS_KEY,
+                JSON.stringify(this.existingShapes)
+              );
+            } catch (e) {
+              console.error("Error saving shapes to localStorage:", e);
+            }
+          } else if (this.sendMessage && this.roomId) {
+            for (const shape of this.SelectionController.getSelectedShapes()) {
+              try {
+                this.sendMessage?.(
+                  JSON.stringify({
+                    type: WsDataType.UPDATE,
+                    id: shape.id,
+                    message: shape,
+                    roomId: this.roomId,
+                  })
+                );
+              } catch (e) {
+                MessageQueue.enqueue({
+                  type: WsDataType.UPDATE,
+                  id: shape.id!,
+                  message: JSON.stringify(shape),
+                  roomId: this.roomId,
+                  userId: this.userId!,
+                  userName: this.userName!,
+                  timestamp: new Date().toISOString(),
+                  participants: null,
+                  connectionId: this.connectionId!,
+                });
+              }
+            }
+          }
+          this.clearCanvas();
+          return;
+        }
         if (
           this.SelectionController.isDraggingShape() ||
           this.SelectionController.isResizingShape()
@@ -1367,6 +1511,16 @@ export class CanvasEngine {
     const { x, y } = this.transformPanScale(e.clientX, e.clientY);
 
     if (this.activeTool === "selection") {
+      if (this.isMarqueeSelecting) {
+        this.marqueeEnd = { x, y };
+        this.clearCanvas();
+        return;
+      }
+      if (this.SelectionController.isMultiDragging()) {
+        this.SelectionController.updateMultiDragging(x, y);
+        this.clearCanvas();
+        return;
+      }
       if (this.SelectionController.isDraggingShape()) {
         this.SelectionController.updateDragging(x, y);
         this.clearCanvas();
@@ -2650,4 +2804,154 @@ export class CanvasEngine {
       }
     }
   };
+
+  private renderCleanCanvas(): void {
+    const savedTool = this.activeTool;
+    const savedCursors = new Map(this.remoteCursors);
+    const savedIndicators = new Map(this.remoteClickIndicators);
+    const savedMarquee = this.isMarqueeSelecting;
+
+    this.activeTool = "grab";
+    this.remoteCursors.clear();
+    this.remoteClickIndicators.clear();
+    this.isMarqueeSelecting = false;
+
+    this.clearCanvas();
+
+    this.activeTool = savedTool;
+    this.remoteCursors = savedCursors;
+    this.remoteClickIndicators = savedIndicators;
+    this.isMarqueeSelecting = savedMarquee;
+  }
+
+  private getExportShapes(): Shape[] {
+    if (this.SelectionController.hasMultiSelection()) {
+      return this.SelectionController.getSelectedShapes();
+    }
+    const single = this.SelectionController.getSelectedShape();
+    if (single) return [single];
+    return [];
+  }
+
+  private renderShapesToDataURL(shapes: Shape[], padding: number = 20): { dataURL: string; width: number; height: number } {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const shape of shapes) {
+      const bounds = this.SelectionController.getShapeBounds(shape);
+      minX = Math.min(minX, bounds.x);
+      minY = Math.min(minY, bounds.y);
+      maxX = Math.max(maxX, bounds.x + bounds.width);
+      maxY = Math.max(maxY, bounds.y + bounds.height);
+    }
+
+    const w = maxX - minX + padding * 2;
+    const h = maxY - minY + padding * 2;
+    const offscreen = document.createElement("canvas");
+    offscreen.width = w;
+    offscreen.height = h;
+    const offCtx = offscreen.getContext("2d")!;
+
+    offCtx.fillStyle = this.canvasBgColor;
+    offCtx.fillRect(0, 0, w, h);
+
+    // Save current context and swap to offscreen
+    const savedCtx = this.ctx;
+    const savedRough = this.roughCanvas;
+    this.ctx = offCtx;
+    this.roughCanvas = rough.canvas(offscreen);
+
+    offCtx.translate(-minX + padding, -minY + padding);
+
+    for (const shape of shapes) {
+      this.renderShape(shape);
+    }
+
+    // Restore original context
+    this.ctx = savedCtx;
+    this.roughCanvas = savedRough;
+
+    return { dataURL: offscreen.toDataURL("image/png"), width: w, height: h };
+  }
+
+  private renderShape(shape: Shape): void {
+    if (shape.type === "rectangle") {
+      this.drawRect(shape.x, shape.y, shape.width, shape.height, shape.strokeWidth || 1, shape.strokeFill || "#ffffff", shape.bgFill || "transparent", shape.rounded, shape.strokeStyle, shape.roughStyle, shape.fillStyle);
+    } else if (shape.type === "ellipse") {
+      this.drawEllipse(shape.x, shape.y, shape.radX, shape.radY, shape.strokeWidth || 1, shape.strokeFill || "#ffffff", shape.bgFill || "transparent", shape.strokeStyle, shape.roughStyle, shape.fillStyle);
+    } else if (shape.type === "diamond") {
+      this.drawDiamond(shape.x, shape.y, shape.width, shape.height, shape.strokeWidth || 1, shape.strokeFill || "#ffffff", shape.bgFill || "transparent", shape.rounded, shape.strokeStyle, shape.roughStyle, shape.fillStyle);
+    } else if (shape.type === "line") {
+      this.drawLine(shape.x, shape.y, shape.toX, shape.toY, shape.strokeWidth || 1, shape.strokeFill || "#ffffff", shape.strokeStyle, shape.roughStyle, false);
+    } else if (shape.type === "arrow") {
+      this.drawLine(shape.x, shape.y, shape.toX, shape.toY, shape.strokeWidth || 1, shape.strokeFill || "#ffffff", shape.strokeStyle, shape.roughStyle, true);
+    } else if (shape.type === "free-draw") {
+      this.drawFreeDraw(shape.points, shape.strokeFill, shape.bgFill, shape.strokeStyle, shape.fillStyle, shape.strokeWidth);
+    } else if (shape.type === "text") {
+      this.drawText(shape.x, shape.y, shape.width, shape.height, shape.text, shape.strokeFill, shape.fontStyle, shape.fontFamily, shape.fontSize, shape.textAlign);
+    }
+  }
+
+  exportToImage() {
+    const exportShapes = this.getExportShapes();
+
+    if (exportShapes.length > 0) {
+      const { dataURL } = this.renderShapesToDataURL(exportShapes);
+      const link = document.createElement("a");
+      link.download = "sketchboard-drawing.png";
+      link.href = dataURL;
+      link.click();
+    } else {
+      this.renderCleanCanvas();
+      const dataURL = this.canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = "sketchboard-drawing.png";
+      link.href = dataURL;
+      link.click();
+      this.clearCanvas();
+    }
+  }
+
+  exportToPdf() {
+    let imgData: string;
+    let w: number;
+    let h: number;
+
+    const exportShapes = this.getExportShapes();
+
+    if (exportShapes.length > 0) {
+      const result = this.renderShapesToDataURL(exportShapes);
+      imgData = result.dataURL;
+      w = result.width;
+      h = result.height;
+    } else {
+      this.renderCleanCanvas();
+      imgData = this.canvas.toDataURL("image/png");
+      w = this.canvas.width;
+      h = this.canvas.height;
+      this.clearCanvas();
+    }
+
+    // Use landscape or portrait based on aspect ratio
+    const orientation = w > h ? "landscape" : "portrait";
+    const pageW = orientation === "landscape" ? Math.max(w, 842) : Math.max(w, 595);
+    const pageH = orientation === "landscape" ? Math.max(h, 595) : Math.max(h, 842);
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html><head><title>Sketchboard Drawing</title>
+<style>
+  @page { size: ${pageW}px ${pageH}px; margin: 0; }
+  * { margin: 0; padding: 0; }
+  body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: white; }
+  img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+</style></head>
+<body><img src="${imgData}" /></body></html>`);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+      }, 300);
+    };
+  }
 }

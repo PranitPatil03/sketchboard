@@ -16,6 +16,7 @@ import {
     DownloadIcon,
     Upload,
     Share2,
+    FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ColorPicker } from "@/components/color-picker"
@@ -44,11 +45,12 @@ interface SidebarProps {
     participants?: RoomParticipants[];
     onClearCanvas?: () => void;
     onExportCanvas?: () => void;
+    onExportPdf?: () => void;
     onImportCanvas?: () => void;
     onSelectTool?: (tool: string) => void;
 }
 
-export function AppSidebar({ isOpen, onClose, canvasColor, setCanvasColor, isMobile, roomName, isStandalone, participants, onClearCanvas, onExportCanvas, onImportCanvas, onSelectTool }: SidebarProps) {
+export function AppSidebar({ isOpen, onClose, canvasColor, setCanvasColor, isMobile, roomName, isStandalone, participants, onClearCanvas, onExportCanvas, onExportPdf, onImportCanvas, onSelectTool }: SidebarProps) {
     const [clearDialogOpen, setClearDialogOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const { theme, setTheme } = useTheme();
@@ -124,6 +126,7 @@ export function AppSidebar({ isOpen, onClose, canvasColor, setCanvasColor, isMob
                                 <>
                                     <SidebarItem icon={TrashIcon} label="Clear canvas" onClick={() => setClearDialogOpen(true)} />
                                     <SidebarItem icon={DownloadIcon} label="Export Drawing" onClick={onExportCanvas} />
+                                    <SidebarItem icon={FileText} label="Save as PDF" onClick={onExportPdf} />
                                     <SidebarItem icon={Upload} label="Import Drawing" onClick={onImportCanvas} />
                                     <SidebarItem icon={Share2} label="Live collaboration" onClick={() => setIsShareOpen(true)} />
                                     {session?.user && session?.user.id ? (

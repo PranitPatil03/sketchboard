@@ -338,6 +338,8 @@ export default function CanvasBoard() {
                                     roomName={userRef.current.roomId ?? undefined}
                                     participants={participants}
                                     onClearCanvas={clearCanvas}
+                                    onExportCanvas={() => canvasEngineState.engine?.exportToImage()}
+                                    onExportPdf={() => canvasEngineState.engine?.exportToPdf()}
                                     onSelectTool={(tool: string) => setCanvasEngineState(prev => ({ ...prev, activeTool: tool as ToolType }))}
                                 />
                             )}

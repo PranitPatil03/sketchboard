@@ -16,6 +16,8 @@ export class SelectionController {
   private selectedShapes: Tool[] = [];
   private isDragging: boolean = false;
   private isResizing: boolean = false;
+  private isMultiDraggingFlag: boolean = false;
+  private multiDragOffsets: Map<string, { x: number; y: number; endX?: number; endY?: number }> = new Map();
   private dragOffset: { x: number; y: number } = { x: 0, y: 0 };
   private dragEndOffset: { x: number; y: number } = { x: 0, y: 0 };
   private activeResizeHandle: ResizeHandle | null = null;
@@ -87,8 +89,103 @@ export class SelectionController {
     this.selectedShapes = [];
   }
 
+  toggleInSelection(shape: Tool) {
+    const index = this.selectedShapes.findIndex(s => s.id === shape.id);
+    if (index !== -1) {
+      this.selectedShapes.splice(index, 1);
+    } else {
+      this.selectedShapes.push(shape);
+    }
+  }
+
+  isShapeInSelection(shape: Tool): boolean {
+    return this.selectedShapes.some(s => s.id === shape.id);
+  }
+
+  isMultiDragging(): boolean {
+    return this.isMultiDraggingFlag;
+  }
+
+  startMultiDragging(x: number, y: number) {
+    this.isMultiDraggingFlag = true;
+    this.multiDragOffsets.clear();
+    for (const shape of this.selectedShapes) {
+      if (shape.type === "line" || shape.type === "arrow") {
+        this.multiDragOffsets.set(shape.id!, {
+          x: x - shape.x,
+          y: y - shape.y,
+          endX: x - shape.toX,
+          endY: y - shape.toY,
+        });
+      } else if (shape.type === "free-draw") {
+        if (shape.points.length > 0) {
+          this.multiDragOffsets.set(shape.id!, {
+            x: x - shape.points[0].x,
+            y: y - shape.points[0].y,
+          });
+        }
+      } else {
+        this.multiDragOffsets.set(shape.id!, {
+          x: x - shape.x,
+          y: y - shape.y,
+        });
+      }
+    }
+    this.setCursor("move");
+  }
+
+  updateMultiDragging(x: number, y: number) {
+    if (!this.isMultiDraggingFlag) return;
+    for (const shape of this.selectedShapes) {
+      const offset = this.multiDragOffsets.get(shape.id!);
+      if (!offset) continue;
+      const newX = x - offset.x;
+      const newY = y - offset.y;
+      if (shape.type === "line" || shape.type === "arrow") {
+        shape.x = newX;
+        shape.y = newY;
+        shape.toX = x - (offset.endX ?? 0);
+        shape.toY = y - (offset.endY ?? 0);
+      } else if (shape.type === "free-draw") {
+        if (shape.points.length > 0) {
+          const dx = newX - shape.points[0].x;
+          const dy = newY - shape.points[0].y;
+          for (const pt of shape.points) {
+            pt.x += dx;
+            pt.y += dy;
+          }
+        }
+      } else {
+        shape.x = newX;
+        shape.y = newY;
+      }
+    }
+    this.triggerUpdate();
+  }
+
+  stopMultiDragging() {
+    this.isMultiDraggingFlag = false;
+    this.multiDragOffsets.clear();
+    this.resetCursor();
+  }
+
   drawMultiSelectionBox() {
     if (this.selectedShapes.length === 0) return;
+
+    const groupBounds = this.getMultiSelectionBounds();
+    if (!groupBounds) return;
+
+    this.ctx.save();
+    this.ctx.strokeStyle = "#6965db";
+    this.ctx.lineWidth = 1;
+    this.ctx.setLineDash([4, 4]);
+    this.ctx.strokeRect(groupBounds.x, groupBounds.y, groupBounds.width, groupBounds.height);
+    this.ctx.setLineDash([]);
+    this.ctx.restore();
+  }
+
+  getMultiSelectionBounds(): { x: number; y: number; width: number; height: number } | null {
+    if (this.selectedShapes.length === 0) return null;
 
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const shape of this.selectedShapes) {
@@ -98,21 +195,18 @@ export class SelectionController {
       maxX = Math.max(maxX, bounds.x + bounds.width);
       maxY = Math.max(maxY, bounds.y + bounds.height);
     }
-
-    const groupBounds = {
+    return {
       x: minX - 4,
       y: minY - 4,
       width: maxX - minX + 8,
       height: maxY - minY + 8,
     };
+  }
 
-    this.ctx.save();
-    this.ctx.strokeStyle = "#6965db";
-    this.ctx.lineWidth = 1;
-    this.ctx.setLineDash([4, 4]);
-    this.ctx.strokeRect(groupBounds.x, groupBounds.y, groupBounds.width, groupBounds.height);
-    this.ctx.setLineDash([]);
-    this.ctx.restore();
+  isPointInMultiSelection(x: number, y: number): boolean {
+    const bounds = this.getMultiSelectionBounds();
+    if (!bounds) return false;
+    return x >= bounds.x && x <= bounds.x + bounds.width && y >= bounds.y && y <= bounds.y + bounds.height;
   }
 
   isDraggingShape(): boolean {
